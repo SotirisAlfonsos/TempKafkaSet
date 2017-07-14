@@ -21,6 +21,7 @@ services:
   ca.org1.example.com:
     image: hyperledger/fabric-ca
     environment:
+      - FABRIC_CA_SERVER_CA_NAME=ca.org1.example.com
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
       - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org1.example.com-cert.pem
       - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/0519248ebdca96166fb2114bdf2ee8d03a270cb0becd5f571a40a1ea8dcbfa17_sk
@@ -33,10 +34,14 @@ services:
     volumes:
       - ./crypto-config/peerOrganizations/org1.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
     container_name: ca_peerOrg1
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.2
 
   ca.org2.example.com:
     image: hyperledger/fabric-ca
     environment:
+      - FABRIC_CA_SERVER_CA_NAME=ca.org2.example.com
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
       - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org2.example.com-cert.pem
       - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/efd0f93bbe2d33473f1cc05eb3fe77c8616e7a3322debfe9f8b34ce4cefe4b2c_sk  #2c1802d92529efc0b94d3e3dfa20257b29198b27403470f1de8352698a53ac73_sk
@@ -49,10 +54,14 @@ services:
     volumes:
       - ./crypto-config/peerOrganizations/org2.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
     container_name: ca_peerOrg2
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.3
 
   ca.org3.example.com:
     image: hyperledger/fabric-ca
     environment:
+      - FABRIC_CA_SERVER_CA_NAME=ca.org3.example.com
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
       - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org3.example.com-cert.pem
       - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/7fbdcc6d54bcd9ae518a128e1b5cac3c0f367502e5628280369f638a630f27c1_sk  #0d72394fa47503e530a1b95d2032bfe98d8df75eb80a98732da8777e0dd08634_sk
@@ -65,6 +74,9 @@ services:
     volumes:
       - ./crypto-config/peerOrganizations/org3.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
     container_name: ca_peerOrg3
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.4
 
 #  ca.org4.example.com:
 #    image: hyperledger/fabric-ca
@@ -103,36 +115,45 @@ services:
     image: hyperledger/fabric-zookeeper
     restart: always
     ports:
-      - 2181:2181
-      - 2888:2888
-      - 3888:3888
+      - 2181
+      - 2888
+      - 3888
     environment:
       - ZOO_MY_ID=1
       - ZOO_SERVERS=server.1=zookeeper0:2888:3888 server.2=zookeeper1:2888:3888 server.3=zookeeper2:2888:3888
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.5
 
   zookeeper1:
     container_name: zookeeper1
     image: hyperledger/fabric-zookeeper
     restart: always
     ports:
-      - 2182:2181
-      - 2889:2888
-      - 3889:3888
+      - 2181
+      - 2888
+      - 3888
     environment:
       - ZOO_MY_ID=2
       - ZOO_SERVERS=server.1=zookeeper0:2888:3888 server.2=zookeeper1:2888:3888 server.3=zookeeper2:2888:3888
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.6
 
   zookeeper2:
     container_name: zookeeper2
     image: hyperledger/fabric-zookeeper
     restart: always
     ports:
-      - 2183:2181
-      - 2890:2888
-      - 3890:3888
+      - 2181
+      - 2888
+      - 3888
     environment:
       - ZOO_MY_ID=3
       - ZOO_SERVERS=server.1=zookeeper0:2888:3888 server.2=zookeeper1:2888:3888 server.3=zookeeper2:2888:3888
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.7
 
   kafka0:
     image: hyperledger/fabric-kafka
@@ -142,18 +163,21 @@ services:
     environment:
       - KAFKA_BROKER_ID=0
       - KAFKA_ADVERTISED_HOST_NAME=kafka0
-      #- KAFKA_MIN_INSYNC_REPLICAS=2
+      - KAFKA_MIN_INSYNC_REPLICAS=2
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper0:2181,zookeeper1:2181,zookeeper2:2181
       - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
-      - KAFKA_DEFAULT_REPLICATION_FACTOR=1
-      #- KAFKA_MESSAGE_MAX_BYTES=103809024
-      #- KAFKA_REPLICA_FETCH_MAX_BYTES=103809024 
+      - KAFKA_DEFAULT_REPLICATION_FACTOR=3
+      - KAFKA_MESSAGE_MAX_BYTES=103809024
+      - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024 
     ports:
       - 9092:9092
     depends_on:
       - zookeeper0
       - zookeeper1
       - zookeeper2
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.8
 
   kafka1:
     image: hyperledger/fabric-kafka
@@ -163,18 +187,21 @@ services:
     environment:
       - KAFKA_BROKER_ID=1
       - KAFKA_ADVERTISED_HOST_NAME=kafka1
-      #- KAFKA_MIN_INSYNC_REPLICAS=2
+      - KAFKA_MIN_INSYNC_REPLICAS=2
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper0:2181,zookeeper1:2181,zookeeper2:2181
       - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
-      - KAFKA_DEFAULT_REPLICATION_FACTOR=1
-      #- KAFKA_MESSAGE_MAX_BYTES=103809024
-      #- KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+      - KAFKA_DEFAULT_REPLICATION_FACTOR=3
+      - KAFKA_MESSAGE_MAX_BYTES=103809024
+      - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
     ports:
       - 9091:9092
     depends_on:
       - zookeeper0
       - zookeeper1
       - zookeeper2
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.9
 
   kafka2:
     image: hyperledger/fabric-kafka
@@ -184,18 +211,21 @@ services:
     environment:
       - KAFKA_BROKER_ID=2
       - KAFKA_ADVERTISED_HOST_NAME=kafka2
-      #- KAFKA_MIN_INSYNC_REPLICAS=2
+      - KAFKA_MIN_INSYNC_REPLICAS=2
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper0:2181,zookeeper1:2181,zookeeper2:2181
       - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
-      - KAFKA_DEFAULT_REPLICATION_FACTOR=1
-      #- KAFKA_MESSAGE_MAX_BYTES=103809024
-      #- KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+      - KAFKA_DEFAULT_REPLICATION_FACTOR=3
+      - KAFKA_MESSAGE_MAX_BYTES=103809024
+      - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
     ports:
       - 9090:9092
     depends_on:
       - zookeeper0
       - zookeeper1
       - zookeeper2
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.10
 
   kafka3:
     image: hyperledger/fabric-kafka
@@ -205,18 +235,21 @@ services:
     environment:
       - KAFKA_BROKER_ID=3
       - KAFKA_ADVERTISED_HOST_NAME=kafka3
-     #- KAFKA_MIN_INSYNC_REPLICAS=2
+      - KAFKA_MIN_INSYNC_REPLICAS=2
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper0:2181,zookeeper1:2181,zookeeper2:2181
       - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
-      - KAFKA_DEFAULT_REPLICATION_FACTOR=1
-      #- KAFKA_MESSAGE_MAX_BYTES=103809024
-      #- KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+      - KAFKA_DEFAULT_REPLICATION_FACTOR=3
+      - KAFKA_MESSAGE_MAX_BYTES=103809024
+      - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
     ports:
       - 9089:9092
     depends_on:
       - zookeeper0
       - zookeeper1
       - zookeeper2
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.11
   
   orderer.example.com:
     container_name: orderer.example.com
@@ -228,7 +261,7 @@ services:
       - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
       - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
       - ORDERER_KAFKA_VERBOSE=true
-      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENADDRESS=orderer.example.com
       - ORDERER_GENERAL_GENESISMETHOD=file
       - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
       - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
@@ -251,47 +284,55 @@ services:
         #- ./crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/:/etc/hyperledger/crypto/peerOrg4
         #- ./crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/:/etc/hyperledger/crypto/peerOrg5
     depends_on:
+      - zookeeper0
+      - zookeeper1
+      - zookeeper2
       - kafka0
       - kafka1
       - kafka2
       - kafka3
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.12
+#      static-test-bridge:
+#        ipv4_address: 173.24.0.12
 
-  orderer1.example.com:
-    container_name: orderer1.example.com
-    image: hyperledger/fabric-orderer
-    environment:
-      - ORDERER_GENERAL_LOGLEVEL=debug
+#  orderer1.example.com:
+#    container_name: orderer1.example.com
+#    image: hyperledger/fabric-orderer
+#    environment:
+#      - ORDERER_GENERAL_LOGLEVEL=debug
       #- CONFIGTX_ORDERER_ORDERERTYPE=kafka
       #- CONFIGTX_ORDERER_KAFKA_BROKERS=[kafka0:9092,kafka1:9092,kafka2:9092,kafka3:9092]
-      - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
-      - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
-      - ORDERER_KAFKA_VERBOSE=true
-      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
-      - ORDERER_GENERAL_GENESISMETHOD=file
-      - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
-      - ORDERER_GENERAL_LOCALMSPID=Orderer1MSP
-      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/crypto/orderer/msp
-      - ORDERER_GENERAL_TLS_ENABLED=true
-      - ORDERER_GENERAL_TLS_PRIVATEKEY=/etc/hyperledger/crypto/orderer/tls/server.key  #msp/keystore/af1789a98ce32a02fb8ec54bda7397072b57518c8c715d99c4a437543584ee6d_sk   #tls/server.key
-      - ORDERER_GENERAL_TLS_CERTIFICATE=/etc/hyperledger/crypto/orderer/tls/server.crt  #msp/signcerts/orderer1.example.com-cert.pem     #tls/server.crt
-      - ORDERER_GENERAL_TLS_ROOTCAS=[/etc/hyperledger/crypto/orderer/tls/ca.crt]  #, /etc/hyperledger/crypto/peerOrg1/tls/ca.crt, /etc/hyperledger/crypto/peerOrg2/tls/ca.crt, /etc/hyperledger/crypto/peerOrg3/tls/ca.crt]
+#      - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
+#      - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
+#      - ORDERER_KAFKA_VERBOSE=true
+#      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+#      - ORDERER_GENERAL_GENESISMETHOD=file
+#      - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
+#      - ORDERER_GENERAL_LOCALMSPID=Orderer1MSP
+#      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/crypto/orderer/msp
+#      - ORDERER_GENERAL_TLS_ENABLED=true
+#      - ORDERER_GENERAL_TLS_PRIVATEKEY=/etc/hyperledger/crypto/orderer/tls/server.key  #msp/keystore/af1789a98ce32a02fb8ec54bda7397072b57518c8c715d99c4a437543584ee6d_sk   #tls/server.key
+#      - ORDERER_GENERAL_TLS_CERTIFICATE=/etc/hyperledger/crypto/orderer/tls/server.crt  #msp/signcerts/orderer1.example.com-cert.pem     #tls/server.crt
+#      - ORDERER_GENERAL_TLS_ROOTCAS=[/etc/hyperledger/crypto/orderer/tls/ca.crt]  #, /etc/hyperledger/crypto/peerOrg1/tls/ca.crt, /etc/hyperledger/crypto/peerOrg2/tls/ca.crt, /etc/hyperledger/crypto/peerOrg3/tls/ca.crt]
 ##- ORDERER_GENERAL_TLS_ROOTCAS=[/etc/hyperledger/crypto/orderer/msp/cacerts/ca.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg1/msp/cacerts/ca.org1.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg2/msp/cacerts/ca.org2.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg3/msp/cacerts/ca.org3.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg4/msp/cacerts/ca.org4.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg5/msp/cacerts/ca.org5.example.com-cert.pem]
-    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderers
-    command: orderer
-    ports:
-      - 7049:7050
-    volumes:
-        - ./channel2:/etc/hyperledger/configtx
-        - ./crypto-config/ordererOrganizations/orderer1.example.com/orderers/orderer1.orderer1.example.com/:/etc/hyperledger/crypto/orderer
+#    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderers
+#    command: orderer
+#    ports:
+#      - 7049:7050
+#    volumes:
+#        - ./channel2:/etc/hyperledger/configtx
+#        - ./crypto-config/ordererOrganizations/orderer1.example.com/orderers/orderer1.orderer1.example.com/:/etc/hyperledger/crypto/orderer
         #- ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/:/etc/hyperledger/crypto/peerOrg1
         #- ./crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/:/etc/hyperledger/crypto/peerOrg2
         #- ./crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/:/etc/hyperledger/crypto/peerOrg3
         #- ./crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/:/etc/hyperledger/crypto/peerOrg4
         #- ./crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/:/etc/hyperledger/crypto/peerOrg5
-    depends_on:
+#    depends_on:
       #- orderer.example.com
-      - kafka0
-      - kafka1
+#      - kafka0
+#      - kafka1
       #- kafka2
       #- kafka3
 ##    links:
@@ -300,87 +341,87 @@ services:
 #      - kafka2:kafka2
 #      - kafka3:kafka3
 
-  orderer2.example.com:
-    container_name: orderer2.example.com
-    image: hyperledger/fabric-orderer
-    environment:
-      - ORDERER_GENERAL_LOGLEVEL=debug
+#  orderer2.example.com:
+#    container_name: orderer2.example.com
+#    image: hyperledger/fabric-orderer
+#    environment:
+#      - ORDERER_GENERAL_LOGLEVEL=debug
       #- CONFIGTX_ORDERER_ORDERERTYPE=kafka
       #- CONFIGTX_ORDERER_KAFKA_BROKERS=[kafka0:9092,kafka1:9092,kafka2:9092,kafka3:9092]
-      - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
-      - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
-      - ORDERER_KAFKA_VERBOSE=true
-      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
-      - ORDERER_GENERAL_GENESISMETHOD=file
-      - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
-      - ORDERER_GENERAL_LOCALMSPID=Orderer2MSP
-      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/crypto/orderer/msp
-      - ORDERER_GENERAL_TLS_ENABLED=true
-      - ORDERER_GENERAL_TLS_PRIVATEKEY=/etc/hyperledger/crypto/orderer/tls/server.key  #msp/keystore/b34b0ba64514b684aee0df7386538991644121a6017844a93a8bdd2ede6221ce_sk   #tls/server.key
-      - ORDERER_GENERAL_TLS_CERTIFICATE=/etc/hyperledger/crypto/orderer/tls/server.crt  #msp/signcerts/orderer2.example.com-cert.pem     #tls/server.crt
-      - ORDERER_GENERAL_TLS_ROOTCAS=[/etc/hyperledger/crypto/orderer/tls/ca.crt]   #, /etc/hyperledger/crypto/peerOrg1/tls/ca.crt, /etc/hyperledger/crypto/peerOrg2/tls/ca.crt, /etc/hyperledger/crypto/peerOrg3/tls/ca.crt] 
+#      - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
+#      - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
+#      - ORDERER_KAFKA_VERBOSE=true
+#      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+#      - ORDERER_GENERAL_GENESISMETHOD=file
+#      - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
+#      - ORDERER_GENERAL_LOCALMSPID=Orderer2MSP
+#      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/crypto/orderer/msp
+#      - ORDERER_GENERAL_TLS_ENABLED=true
+#      - ORDERER_GENERAL_TLS_PRIVATEKEY=/etc/hyperledger/crypto/orderer/tls/server.key  #msp/keystore/b34b0ba64514b684aee0df7386538991644121a6017844a93a8bdd2ede6221ce_sk   #tls/server.key
+#      - ORDERER_GENERAL_TLS_CERTIFICATE=/etc/hyperledger/crypto/orderer/tls/server.crt  #msp/signcerts/orderer2.example.com-cert.pem     #tls/server.crt
+#      - ORDERER_GENERAL_TLS_ROOTCAS=[/etc/hyperledger/crypto/orderer/tls/ca.crt]   #, /etc/hyperledger/crypto/peerOrg1/tls/ca.crt, /etc/hyperledger/crypto/peerOrg2/tls/ca.crt, /etc/hyperledger/crypto/peerOrg3/tls/ca.crt] 
 #- ORDERER_GENERAL_TLS_ROOTCAS=[/etc/hyperledger/crypto/orderer/msp/cacerts/ca.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg1/msp/cacerts/ca.org1.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg2/msp/cacerts/ca.org2.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg3/msp/cacerts/ca.org3.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg4/msp/cacerts/ca.org4.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg5/msp/cacerts/ca.org5.example.com-cert.pem]
-    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderers
-    command: orderer
-    ports:
-      - 7048:7050
-    volumes:
-        - ./channel2:/etc/hyperledger/configtx
-        - ./crypto-config/ordererOrganizations/orderer2.example.com/orderers/orderer2.orderer2.example.com/:/etc/hyperledger/crypto/orderer
+#    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderers
+#    command: orderer
+#    ports:
+#      - 7048:7050
+#    volumes:
+#        - ./channel2:/etc/hyperledger/configtx
+#        - ./crypto-config/ordererOrganizations/orderer2.example.com/orderers/orderer2.orderer2.example.com/:/etc/hyperledger/crypto/orderer
 #        #- ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/:/etc/hyperledger/crypto/peerOrg1
         #- ./crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/:/etc/hyperledger/crypto/peerOrg2
         #- ./crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/:/etc/hyperledger/crypto/peerOrg3
         #- ./crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/:/etc/hyperledger/crypto/peerOrg4
         #- ./crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/:/etc/hyperledger/crypto/peerOrg5
-    depends_on:
+#    depends_on:
       #- kafka0
       #- kafka1
-      - kafka2
-      - kafka3
+#      - kafka2
+#      - kafka3
 #    links:
 #      - kafka0:kafka0
 #      - kafka1:kafka1
 #      - kafka2:kafka2
 #      - kafka3:kafka3
 
-  orderer3.example.com:
-    container_name: orderer3.example.com
-    image: hyperledger/fabric-orderer
-    environment:
-      - ORDERER_GENERAL_LOGLEVEL=debug      
+#  orderer3.example.com:
+#    container_name: orderer3.example.com
+#    image: hyperledger/fabric-orderer
+#    environment:
+#      - ORDERER_GENERAL_LOGLEVEL=debug      
       #- CONFIGTX_ORDERER_ORDERERTYPE=kafka
       #- CONFIGTX_ORDERER_KAFKA_BROKER=[kafka0:9092,kafka1:9092,kafka2:9092,kafka3:9092]
-      - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
-      - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
-      - ORDERER_KAFKA_VERBOSE=true
-      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
-      - ORDERER_GENERAL_GENESISMETHOD=file
-      - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
-      - ORDERER_GENERAL_LOCALMSPID=Orderer3MSP
-      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/crypto/orderer/msp
-      - ORDERER_GENERAL_TLS_ENABLED=true
-      - ORDERER_GENERAL_TLS_PRIVATEKEY=/etc/hyperledger/crypto/orderer/tls/server.key  #msp/keystore/d17cf61db4b6beb73a3f948e74cf35c1efabe228d8933db439cb2a7568bcd91d_sk   #tls/server.key
-      - ORDERER_GENERAL_TLS_CERTIFICATE=/etc/hyperledger/crypto/orderer/tls/server.crt  #msp/signcerts/orderer3.example.com-cert.pem     #tls/server.crt
-      - ORDERER_GENERAL_TLS_ROOTCAS=[/etc/hyperledger/crypto/orderer/tls/ca.crt]   #, /etc/hyperledger/crypto/peerOrg1/tls/ca.crt, /etc/hyperledger/crypto/peerOrg2/tls/ca.crt, /etc/hyperledger/crypto/peerOrg3/tls/ca.crt] 
+#      - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
+#      - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
+#      - ORDERER_KAFKA_VERBOSE=true
+#      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+#      - ORDERER_GENERAL_GENESISMETHOD=file
+#      - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
+#      - ORDERER_GENERAL_LOCALMSPID=Orderer3MSP
+#      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/crypto/orderer/msp
+#      - ORDERER_GENERAL_TLS_ENABLED=true
+#      - ORDERER_GENERAL_TLS_PRIVATEKEY=/etc/hyperledger/crypto/orderer/tls/server.key  #msp/keystore/d17cf61db4b6beb73a3f948e74cf35c1efabe228d8933db439cb2a7568bcd91d_sk   #tls/server.key
+#      - ORDERER_GENERAL_TLS_CERTIFICATE=/etc/hyperledger/crypto/orderer/tls/server.crt  #msp/signcerts/orderer3.example.com-cert.pem     #tls/server.crt
+#      - ORDERER_GENERAL_TLS_ROOTCAS=[/etc/hyperledger/crypto/orderer/tls/ca.crt]   #, /etc/hyperledger/crypto/peerOrg1/tls/ca.crt, /etc/hyperledger/crypto/peerOrg2/tls/ca.crt, /etc/hyperledger/crypto/peerOrg3/tls/ca.crt] 
 ###- ORDERER_GENERAL_TLS_ROOTCAS=[/etc/hyperledger/crypto/orderer/msp/cacerts/ca.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg1/msp/cacerts/ca.org1.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg2/msp/cacerts/ca.org2.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg3/msp/cacerts/ca.org3.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg4/msp/cacerts/ca.org4.example.com-cert.pem, /etc/hyperledger/crypto/peerOrg5/msp/cacerts/ca.org5.example.com-cert.pem]
-    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderers
-    command: orderer
-    ports:
-      - 7047:7050
-    volumes:
-        - ./channel2:/etc/hyperledger/configtx
-        - ./crypto-config/ordererOrganizations/orderer3.example.com/orderers/orderer3.orderer3.example.com/:/etc/hyperledger/crypto/orderer
+#    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderers
+#    command: orderer
+#    ports:
+#      - 7047:7050
+#    volumes:
+#        - ./channel2:/etc/hyperledger/configtx
+#        - ./crypto-config/ordererOrganizations/orderer3.example.com/orderers/orderer3.orderer3.example.com/:/etc/hyperledger/crypto/orderer
         #- ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/:/etc/hyperledger/crypto/peerOrg1
         #- ./crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/:/etc/hyperledger/crypto/peerOrg2
         #- ./crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/:/etc/hyperledger/crypto/peerOrg3
        # #- ./crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/:/etc/hyperledger/crypto/peerOrg4
         #- ./crypto-config/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/:/etc/hyperledger/crypto/peerOrg5
-    depends_on:
+#    depends_on:
       #- kafka0
      #- kafka1
       #- orderer2.example.com
-      - kafka2
-      - kafka3
+#      - kafka2
+#      - kafka3
 ###    links:
 ##      - kafka0:kafka0
 ##      - kafka1:kafka1
@@ -396,6 +437,12 @@ services:
       - CORE_PEER_ID=peer0.org1.example.com
       - CORE_PEER_LOCALMSPID=Org1MSP
       - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.example.com:7051
+      #- CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=artifacts_static-test-bridge
+      #- CORE_PEER_GOSSIP_ENDPOINT=peer0.org1.example.com:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.org1.example.com:7056
+      - CORE_PEER_LISTENADDRESS=peer0.org1.example.com:7051
+      - CORE_PEER_EVENTS_ADDRESS=peer0.org1.example.com:7053
       #- CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/crypto/peer/msp/keystore/ced9d39b0a83166bf541b0a4fcbbdd24ce9ae630775c178ca70c801499b557cf_sk    #tls/server.key
       #- CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/crypto/peer/msp/signcerts/peer0.org1.example.com-cert.pem     #tls/server.crt
       #- CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/crypto/peer/msp/cacerts/ca.org1.example.com-cert.pem      #tls/ca.crt
@@ -409,6 +456,11 @@ services:
       #- orderer1.example.com
       #- orderer2.example.com
       #- orderer3.example.com
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.13
+#      static-test-bridge:
+#        ipv4_address: 173.24.0.13
 
   peer1.org1.example.com:
     container_name: peer1.org1.example.com
@@ -418,7 +470,12 @@ services:
     environment:
       - CORE_PEER_ID=peer1.org1.example.com
       - CORE_PEER_LOCALMSPID=Org1MSP
-      - CORE_PEER_ADDRESS=peer1.org1.example.com:7051
+      - CORE_PEER_ADDRESS=peer1.org1.example.com:7056
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org1.example.com:7056
+      #- CORE_PEER_GOSSIP_ENDPOINT=peer1.org1.example.com:7051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+      - CORE_PEER_LISTENADDRESS=peer1.org1.example.com:7056
+      - CORE_PEER_EVENTS_ADDRESS=peer1.org1.example.com:7058
     ports:
       - 7056:7051
       - 7058:7053
@@ -426,9 +483,13 @@ services:
         - ./crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/:/etc/hyperledger/crypto/peer
     depends_on:
       - orderer.example.com
+      #- peer0.org1.example.com
       #- orderer1.example.com
       #- orderer2.example.com
       #- orderer3.example.com
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.14
 
   peer0.org2.example.com:
     container_name: peer0.org2.example.com
@@ -438,10 +499,15 @@ services:
     environment:
       - CORE_PEER_ID=peer0.org2.example.com
       - CORE_PEER_LOCALMSPID=Org2MSP
-      - CORE_PEER_ADDRESS=peer0.org2.example.com:7051
+      - CORE_PEER_ADDRESS=peer0.org2.example.com:8051
+#      - CORE_PEER_GOSSIP_ENDPOINT=peer0.org2.example.com:8051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.example.com:8051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.org2.example.com:8056
+      - CORE_PEER_LISTENADDRESS=peer0.org2.example.com:8051
+      - CORE_PEER_EVENTS_ADDRESS=peer0.org2.example.com:8053
     ports:
-      - 8051:7051
-      - 8053:7053
+      - 8051:8051
+      - 8053:8053
     volumes:
         - ./crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/:/etc/hyperledger/crypto/peer
     depends_on:
@@ -449,6 +515,9 @@ services:
       #- orderer1.example.com
       #- orderer2.example.com
       #- orderer3.example.com
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.15
 
   peer1.org2.example.com:
     container_name: peer1.org2.example.com
@@ -458,17 +527,26 @@ services:
     environment:
       - CORE_PEER_ID=peer1.org2.example.com
       - CORE_PEER_LOCALMSPID=Org2MSP
-      - CORE_PEER_ADDRESS=peer1.org2.example.com:7051
+      - CORE_PEER_ADDRESS=peer1.org2.example.com:8056
+#      - CORE_PEER_GOSSIP_ENDPOINT=peer1.org2.example.com:8051:8053
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org2.example.com:8056
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:8051
+      - CORE_PEER_LISTENADDRESS=peer1.org2.example.com:8056
+      - CORE_PEER_EVENTS_ADDRESS=peer1.org2.example.com:8058
     ports:
-      - 8056:7051
-      - 8058:7053
+      - 8056:8051
+      - 8058:8053
     volumes:
         - ./crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/:/etc/hyperledger/crypto/peer
     depends_on:
       - orderer.example.com
+      #- peer0.org2.example.com
       #- orderer1.example.com
       #- orderer2.example.com
       #- orderer3.example.com
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.16
 
   peer0.org3.example.com:
     container_name: peer0.org3.example.com
@@ -478,10 +556,15 @@ services:
     environment:
       - CORE_PEER_ID=peer0.org3.example.com
       - CORE_PEER_LOCALMSPID=Org3MSP
-      - CORE_PEER_ADDRESS=peer0.org3.example.com:7051
+      - CORE_PEER_ADDRESS=peer0.org3.example.com:8151
+#      - CORE_PEER_GOSSIP_ENDPOINT=peer0.org3.example.com:8151
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org3.example.com:8156
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org3.example.com:8151
+      - CORE_PEER_LISTENADDRESS=peer0.org3.example.com:8151
+      - CORE_PEER_EVENTS_ADDRESS=peer0.org3.example.com:8153
     ports:
-      - 8151:7051
-      - 8153:7053
+      - 8151:8151
+      - 8153:8153
     volumes:
         - ./crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/:/etc/hyperledger/crypto/peer
     depends_on:
@@ -489,6 +572,9 @@ services:
       #- orderer1.example.com
       #- orderer2.example.com
       #- orderer3.example.com
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.17
 
   peer1.org3.example.com:
     container_name: peer1.org3.example.com
@@ -498,17 +584,28 @@ services:
     environment:
       - CORE_PEER_ID=peer1.org3.example.com
       - CORE_PEER_LOCALMSPID=Org3MSP
-      - CORE_PEER_ADDRESS=peer1.org3.example.com:7051
+      - CORE_PEER_ADDRESS=peer1.org3.example.com:8156
+#      - CORE_PEER_GOSSIP_ENDPOINT=peer1.org3.example.com:8151
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org3.example.com:8156
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org3.example.com:8151
+      - CORE_PEER_LISTENADDRESS=peer1.org3.example.com:8156
+      - CORE_PEER_EVENTS_ADDRESS=peer1.org3.example.com:8158
     ports:
-      - 8156:7051
-      - 8158:7053
+      - 8156:8151
+      - 8158:8153
     volumes:
         - ./crypto-config/peerOrganizations/org3.example.com/peers/peer1.org3.example.com/:/etc/hyperledger/crypto/peer
     depends_on:
       - orderer.example.com
+      #- peer0.org3.example.com
       #- orderer1.example.com
       #- orderer2.example.com
       #- orderer3.example.com
+    networks:
+      static-network:
+        ipv4_address: 172.24.0.18
+      #static-test-bridge:
+      #  ipv4_address: 173.24.0.18
 
 #  peer0.org4.example.com:
 #    container_name: peer0.org4.example.com
@@ -520,8 +617,8 @@ services:
 #      - CORE_PEER_LOCALMSPID=Org4MSP
 #      - CORE_PEER_ADDRESS=peer0.org4.example.com:7051
 #    ports:
-#      - 8251:7051
-#      - 8253:7053
+#      - 8251:8251
+#      - 8253:8253
 #    volumes:
 #        - ./crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/:/etc/hyperledger/crypto/peer
 #    depends_on:
@@ -589,3 +686,19 @@ services:
       #- orderer1.example.com
       #- orderer2.example.com
       #- orderer3.example.com
+networks:
+  static-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.24.0.0/16
+          gateway: 172.24.0.1
+#  static-test-bridge:
+#    ipam:
+#      driver: default
+#      config:
+#        - subnet: 173.24.0.0/16
+#          gateway: 173.24.0.1
+  
+ 
+
